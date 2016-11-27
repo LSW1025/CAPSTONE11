@@ -18,19 +18,17 @@ class JSONResponse(HttpResponse):
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
 
-# 단어 리스트를 주고 난이도에 따라 적절한 값을 리턴
-#def levelOfDifficulty(word_list):
-
 @csrf_exempt
 def firstWord(request):
     if request.method == 'GET':
-        firstWord = u"사이"
+        firstWord = u"름*"
         now = datetime.datetime.now()
         n = Checkdup(time = now)
         n.save()
         p = Checkdup.objects.get(time=now)
         m = Word(word = firstWord, session_num=str(p.idx))
         m.save()
+
 
         url2 = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
         url2 =  url2[0:40] + urllib.quote(firstWord[0:len(firstWord)].encode('utf-8')) + url2[41:]
@@ -44,7 +42,6 @@ def firstWord(request):
         return JSONResponse(result)
 
 
-
 def checkDuplication(word_, session):
     p = Word.objects.filter(word=word_)
     flag = False
@@ -54,6 +51,18 @@ def checkDuplication(word_, session):
     if flag == True: return True
     else: return False
 
+
+def checkNorthKoreaLang(word, session):
+        url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
+        url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
+        soup = BeautifulSoup(urllib2.urlopen(url).read())
+        strArray = soup.find("span","ex")
+        curWord = strArray.text[1:4].encode('utf-8')
+        target = "북한어"
+        if curWord == target:
+            return True # 북한어
+        else:
+            return False
 
 def checkExistance(word, session): # 상대편이 말한 단어가 존재하지 않으면 
         url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
@@ -69,7 +78,6 @@ def checkExistance(word, session): # 상대편이 말한 단어가 존재하지 
             return True
         else:
             return False
-
 
 # 단어를 10개 랜덤으로 중복안되게 뿌려줌. 일단 10개만
 def nextWord(request):
@@ -118,15 +126,16 @@ def nextWord(request):
         next_word = ''
         flag = False
         for i in l:
-            if checkDuplication(i, session_num) == False: # 중복이 없으면
-                next_word = i
-                flag = True
-                break
+            if checkNorthKoreaLang(i, session_num) == False: # 북한어아닐때
+                if checkDuplication(i, session_num) == False: # 중복이 없으면
+                    next_word = i
+                    flag = True
+                    break
 
-        # 현재 뽑은 단어가 모두 중복이면
+        # 현재 뽑은 단어가 모두 중복이거나 모두 북한어 이면 종료
         if flag == False:
-            return JSONResponse({'word':"dup",
-                                 'session':session_num,'meaning':"dup"})
+            return JSONResponse({'word':"end",
+                                 'session':session_num,'meaning':"end"})
 
         url2 = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
         url2 =  url2[0:40] + urllib.quote(next_word[0:len(next_word)].encode('utf-8')) + url2[41:]
@@ -142,20 +151,3 @@ def nextWord(request):
                   'meaning':meaning[0].text}
         return JSONResponse(result)
 
-
-# 단어의 뜻을 찾아주는 함수
-def viewMeaning(request):
-    if request.method == 'GET':
-        curWord = request.GET['word']
-        session_num = request.GET['session']
-        url = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
-        url =  url[0:40] + urllib.quote(curWord[0:len(curWord)].encode('utf-8')) + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read())
-        meaning = soup.findAll("a", "fnt15")[0].find_all_next("p")
-        if len(meaning[0].text) < 6:
-            meaning = soup.findAll("a", "fnt15")[0].find_all_next("span", "con")
-        result = {'meaning':meaning[0].text, 'session':session_num}
-        return JSONResponse(result)
-
-
-# Create your views here.
