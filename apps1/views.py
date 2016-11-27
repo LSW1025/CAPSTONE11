@@ -3,6 +3,7 @@ from django.shortcuts import render
 from .models import Word, Checkdup
 from bs4 import BeautifulSoup
 import urllib2
+import urllib
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from random import shuffle
@@ -31,10 +32,10 @@ def firstWord(request):
         m = Word(word = firstWord, session_num=str(p.idx))
         m.save()
 
-
         url2 = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
-        url2 =  url2[0:40] + firstWord[0:len(firstWord)].encode('utf-8') + url2[41:]
-        soup2 = BeautifulSoup(urllib2.urlopen(url2).read(), "lxml")
+        url2 =  url2[0:40] + urllib.quote(firstWord[0:len(firstWord)].encode('utf-8')) + url2[41:]
+
+        soup2 = BeautifulSoup(urllib2.urlopen(url2).read())
         meaning = soup2.findAll("a", "fnt15")[0].find_all_next("p")
         if len(meaning[0].text) < 6:
             meaning = soup2.findAll("a", "fnt15")[0].find_all_next("span", "con")
@@ -56,8 +57,8 @@ def checkDuplication(word_, session):
 
 def checkExistance(word, session): # 상대편이 말한 단어가 존재하지 않으면 
         url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
-        url =  url[0:40] + word[0:len(word)].encode('utf-8') + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read(), "lxml")
+        url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
+        soup = BeautifulSoup(urllib2.urlopen(url).read())
         strArray = soup.findAll("h4")
         if len(strArray) < 1:
             return False
@@ -86,8 +87,8 @@ def nextWord(request):
 
         # 웹페이지에서받은 단어 끝으로 시작하는 단어 10개를 가져옴
         url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page=1"
-        url =  url[0:40] + curWord[len(curWord)-2:len(curWord)-1].encode('utf-8') + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read(), "lxml")
+        url =  url[0:40] + urllib.quote(curWord[len(curWord)-2:len(curWord)-1].encode('utf-8')) + url[41:]
+        soup = BeautifulSoup(urllib2.urlopen(url).read())
 
         whole_list = soup.findAll("ul", "lst3")
         # 다음 단어를 말할게 없으면
@@ -128,8 +129,8 @@ def nextWord(request):
                                  'session':session_num,'meaning':"dup"})
 
         url2 = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
-        url2 =  url2[0:40] + next_word[0:len(next_word)].encode('utf-8') + url2[41:]
-        soup2 = BeautifulSoup(urllib2.urlopen(url2).read(), "lxml")
+        url2 =  url2[0:40] + urllib.quote(next_word[0:len(next_word)].encode('utf-8')) + url2[41:]
+        soup2 = BeautifulSoup(urllib2.urlopen(url2).read())
         meaning = soup2.findAll("a", "fnt15")[0].find_all_next("p")
         if len(meaning[0].text) < 6:
             meaning = soup2.findAll("a", "fnt15")[0].find_all_next("span", "con")
@@ -148,8 +149,8 @@ def viewMeaning(request):
         curWord = request.GET['word']
         session_num = request.GET['session']
         url = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
-        url =  url[0:40] + curWord[0:len(curWord)].encode('utf-8') + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read(), "lxml")
+        url =  url[0:40] + urllib.quote(curWord[0:len(curWord)].encode('utf-8')) + url[41:]
+        soup = BeautifulSoup(urllib2.urlopen(url).read())
         meaning = soup.findAll("a", "fnt15")[0].find_all_next("p")
         if len(meaning[0].text) < 6:
             meaning = soup.findAll("a", "fnt15")[0].find_all_next("span", "con")
