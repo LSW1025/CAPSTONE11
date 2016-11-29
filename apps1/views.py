@@ -58,9 +58,11 @@ def checkNorthKoreaLang(word, session):
         soup = BeautifulSoup(urllib2.urlopen(url).read())
         strArray = soup.find("span","ex")
         curWord = strArray.text[1:4].encode('utf-8')
+        curWord2 = strArray.text[1:3].encode('utf-8')
         target = "북한어"
-        if curWord == target:
-            return True # 북한어
+        target2 = "방언"
+        if curWord == target or curWord2 == target2:
+            return True # 북한어 또는 방언
         else:
             return False
 
