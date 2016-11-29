@@ -21,7 +21,7 @@ class JSONResponse(HttpResponse):
 @csrf_exempt
 def firstWord(request):
     if request.method == 'GET':
-        firstWord = u"사이"
+        firstWord = u"사랑"
         now = datetime.datetime.now()
         n = Checkdup(time = now)
         n.save()
