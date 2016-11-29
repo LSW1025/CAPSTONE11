@@ -56,10 +56,10 @@ def checkNorthKoreaLang(word, session):
         url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
         url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
         soup = BeautifulSoup(urllib2.urlopen(url).read())
-        strArray = soup.find("span","ex")
-        if strArray is not None:
-            curWord = strArray.text[1:4].encode('utf-8')
-            curWord2 = strArray.text[1:3].encode('utf-8')
+        strArray = soup.findAll("span","ex")
+        if len(strArray) > 0:
+            curWord = strArray[0].text[1:4].encode('utf-8')
+            curWord2 = strArray[0].text[1:3].encode('utf-8')
             target = "북한어"
             target2 = "방언"
             if curWord == target or curWord2 == target2:
