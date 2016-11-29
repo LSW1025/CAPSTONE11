@@ -57,8 +57,6 @@ def makeInitDB():
 @csrf_exempt
 def firstWord(request):
     if request.method == 'GET':
-        makeInitDB()
-        return HttpResponse("success")
         all_entries = InitWord.objects.all()
         num = random.randrange(0,len(all_entries))
         firstWord = all_entries[num].word
