@@ -1,6 +1,6 @@
 # -*- coding=utf-8 -*-
 from django.shortcuts import render
-from .models import Word, Checkdup
+from .models import Word, Checkdup, InitWord
 from bs4 import BeautifulSoup
 import urllib2
 import urllib
@@ -11,6 +11,8 @@ import datetime
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from operator import eq
+import random
+
 
 class JSONResponse(HttpResponse):
     def __init__(self, data, **kwargs):
@@ -18,17 +20,52 @@ class JSONResponse(HttpResponse):
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
 
+
+def makeInitDB():
+    start_list = ['가', '나', '다', '라', '마', '바', '사', '아', '자', '차', '카',
+         '타','파', '하']
+
+    for sw in start_list:
+        url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page=1"
+        url = url[0:40] + urllib.quote(sw) + url[41:]
+        soup = BeautifulSoup(urllib2.urlopen(url).read())
+
+        whole_list = soup.findAll("ul", "lst3")
+
+        word_list = whole_list[0].findAll("a", "fnt15")
+        l = []
+        for i in word_list:
+            f = False
+            for j in range(len(i.text)):
+                if i.text[j] == '(':
+                    data = i.text[0:j-1]
+                    l.append(data)
+                    f = True
+                    break
+                if i.text[j].isdigit() == True:
+                    data = i.text[0:j]
+                    l.append(data)
+                    f = True
+                    break
+            if f == False:
+                l.append(i.text[:])
+        for i in l:
+            n = InitWord(word=i)
+            n.save()
+
+
 @csrf_exempt
 def firstWord(request):
     if request.method == 'GET':
-        firstWord = u"사랑"
+        all_entries = InitWord.objects.all()
+        num = random.randrange(0,len(all_entries))
+        firstWord = all_entries[num].word
         now = datetime.datetime.now()
         n = Checkdup(time = now)
         n.save()
         p = Checkdup.objects.get(time=now)
         m = Word(word = firstWord, session_num=str(p.idx))
         m.save()
-
 
         url2 = 'http://krdic.naver.com/search.nhn?query= &kind=keyword'
         url2 =  url2[0:40] + urllib.quote(firstWord[0:len(firstWord)].encode('utf-8')) + url2[41:]
@@ -52,7 +89,7 @@ def checkDuplication(word_, session):
     else: return False
 
 
-def checkNorthKoreaLang(word, session):
+def checkNorthKorean(word, session):
         url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
         url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
         soup = BeautifulSoup(urllib2.urlopen(url).read())
@@ -133,7 +170,7 @@ def nextWord(request):
         next_word = ''
         flag = False
         for i in l:
-            if checkNorthKoreaLang(i, session_num) == False: # 북한어아닐때
+            if checkNorthKorean(i, session_num) == False: # 북한어아닐때
                 if checkDuplication(i, session_num) == False: # 중복이 없으면
                     next_word = i
                     flag = True

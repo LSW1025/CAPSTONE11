@@ -11,4 +11,8 @@ class Checkdup(models.Model):
     idx = models.IntegerField(primary_key=True)
     time = models.TextField()
 
+class InitWord(models.Model):
+    idx = models.IntegerField(primary_key=True)
+    word = models.TextField()
+
 # Create your models here.
