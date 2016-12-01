@@ -90,43 +90,60 @@ def checkDuplication(word_, session):
 
 
 def checkNorthKorean(word, session):
-        url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
-        url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read())
-        strArray = soup.findAll("span","ex")
-        if len(strArray) > 0:
-            curWord = strArray[0].text[1:4].encode('utf-8')
-            curWord2 = strArray[0].text[1:3].encode('utf-8')
-            target = "북한어"
-            target2 = "방언"
-            if curWord == target or curWord2 == target2:
-                return True # 북한어 또는 방언
-            else:
-                return False
+    url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
+    url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
+    soup = BeautifulSoup(urllib2.urlopen(url).read())
+    strArray = soup.findAll("span","ex")
+    if len(strArray) > 0:
+        curWord = strArray[0].text[1:4].encode('utf-8')
+        curWord2 = strArray[0].text[1:3].encode('utf-8')
+        target = "북한어"
+        target2 = "방언"
+        if curWord == target or curWord2 == target2:
+            return True # 북한어 또는 방언
         else:
             return False
+    else:
+        return False
 
 def checkExistance(word, session): # 상대편이 말한 단어가 존재하지 않으면 
-        url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
-        url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read())
-        strArray = soup.findAll("h4")
-        if len(strArray) < 1:
-            return False
-        strArray2 = str(strArray[0]).split()
-        if len(strArray2) < 4:
-            return False
-        if len(strArray2[4].decode('utf-8')) >= 10:
+    url = 'http://krdic.naver.com/search.nhn?query= &kind=all'
+    url =  url[0:40] + urllib.quote(word[0:len(word)].encode('utf-8')) + url[41:]
+    soup = BeautifulSoup(urllib2.urlopen(url).read())
+
+    whole_list = soup.findAll("ul", "lst3")
+    # 다음 단어를 말할게 없으면
+    if len(whole_list) == 0:
+        return False
+    word_list = whole_list[0].findAll("a", "fnt15")
+    l = []
+    for i in word_list:
+        f = False
+        for j in range(len(i.text)):
+            if i.text[j] == '(':
+                data = i.text[0:j-1]
+                l.append(data)
+                f = True
+                break
+            if i.text[j].isdigit() == True:
+                data = i.text[0:j]
+                l.append(data)
+                f = True
+                break
+
+    word = word[1:len(word)-1]
+    for i in l:
+        if i == word:
             return True
-        else:
-            return False
+    return False
+
 
 # 단어를 10개 랜덤으로 중복안되게 뿌려줌. 일단 10개만
 def nextWord(request):
     if request.method == 'GET':
         curWord = request.GET['word']
         session_num = request.GET['session']
-        if checkExistance(curWord, session_num) == True:
+        if checkExistance(curWord, session_num) == False:
             return JSONResponse({'word':"no", 'session':session_num,
                                  'meaning':"no"})
         # 유저가 말한 단어가 중복이면
