@@ -146,7 +146,7 @@ def getNextTenWord(word, num, session_num):
         soup = BeautifulSoup(urllib2.urlopen(url).read())
 
         whole_list = soup.findAll("ul", "lst3")
-        if len(whole_list) < 1:
+        if len(whole_list) == 0:
             return 0
         word_list = whole_list[0].findAll("a", "fnt15")
         l = []
@@ -192,7 +192,7 @@ def nextWord(request):
 #        if checkExistance(curWord, session_num) == True:
 #            return JSONResponse({'word':"non", 'session':session_num})
         page = -1
-        for i in range(1,200):
+        for i in range(1,10):
             if getNextTenWord(curWord, i,session_num) != 0:
                 page = i
                 break
