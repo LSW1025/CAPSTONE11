@@ -146,6 +146,8 @@ def getNextTenWord(word, num, session_num):
         soup = BeautifulSoup(urllib2.urlopen(url).read())
 
         whole_list = soup.findAll("ul", "lst3")
+        if len(whole_list) < 1:
+            return 0
         word_list = whole_list[0].findAll("a", "fnt15")
         l = []
         for i in word_list:
