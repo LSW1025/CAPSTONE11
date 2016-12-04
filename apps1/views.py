@@ -140,14 +140,37 @@ def checkExistance(word, session): # 상대편이 말한 단어가 존재하지 
             return True
     return False
 
-def getNextTenWord(word, num):
-        url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page= "
-        url =  url[0:40]+urllib.quote(word[len(word)-2:len(word)-1].encode('utf-8'))+url[41:len(url)-1]+ str(num)
+def getNextTenWord(word, num, session_num):
+        url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page="
+        url =  url[0:40]+urllib.quote(word[len(word)-2:len(word)-1].encode('utf-8'))+url[41:]+ str(num)
         soup = BeautifulSoup(urllib2.urlopen(url).read())
 
         whole_list = soup.findAll("ul", "lst3")
-        # 다음 단어를 말할게 없으면
-        if len(whole_list) == 0:
+        word_list = whole_list[0].findAll("a", "fnt15")
+        l = []
+        for i in word_list:
+            f = False
+            for j in range(len(i.text)):
+                if i.text[j] == '(':
+                    data = i.text[0:j-1]
+                    l.append(data)
+                    f = True
+                    break
+                if i.text[j].isdigit() == True:
+                    data = i.text[0:j]
+                    l.append(data)
+                    f = True
+                    break
+            if f == False:
+                l.append(i.text[:])
+        flag = False
+        for i in l:
+            if checkNorthKorean(i, session_num) == False: # 북한어아닐때
+                if checkDuplication(i, session_num) == False: # 중복이 없으면
+                    flag = True
+                    break
+
+        if flag == False:
             return 0
         else:
             return 1
@@ -166,18 +189,17 @@ def nextWord(request):
         # 유저가 말한 단어가 존재하지 않으면        
 #        if checkExistance(curWord, session_num) == True:
 #            return JSONResponse({'word':"non", 'session':session_num})
-
         page = -1
         for i in range(1,200):
-            if getNextTenWord(curWord, i) != 0:
+            if getNextTenWord(curWord, i,session_num) != 0:
                 page = i
                 break
         if page == -1:
             return JSONResponse({'word':"end", 'session':session_num,
                                  'meaning':"end"})
         else:
-            url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page= "
-            url =  url[0:40] +urllib.quote(curWord[len(curWord)-2:len(curWord)-1].encode('utf-8'))+ url[41:len(url)-1] + str(page)
+            url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page="
+            url =  url[0:40] +urllib.quote(curWord[len(curWord)-2:len(curWord)-1].encode('utf-8'))+ url[41:] + str(page)
             soup = BeautifulSoup(urllib2.urlopen(url).read())
 
             whole_list = soup.findAll("ul", "lst3")
