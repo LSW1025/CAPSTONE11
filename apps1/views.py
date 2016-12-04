@@ -131,12 +131,26 @@ def checkExistance(word, session): # 상대편이 말한 단어가 존재하지 
                 f = True
                 break
 
+        if f == False:
+            l.append(i.text[:])
+
     word = word[1:len(word)-1]
     for i in l:
         if i == word:
             return True
     return False
 
+def getNextTenWord(word, num):
+        url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page= "
+        url =  url[0:40]+urllib.quote(word[len(word)-2:len(word)-1].encode('utf-8'))+url[41:len(url)-1]+ str(num)
+        soup = BeautifulSoup(urllib2.urlopen(url).read())
+
+        whole_list = soup.findAll("ul", "lst3")
+        # 다음 단어를 말할게 없으면
+        if len(whole_list) == 0:
+            return 0
+        else:
+            return 1
 
 # 단어를 10개 랜덤으로 중복안되게 뿌려줌. 일단 10개만
 def nextWord(request):
@@ -153,17 +167,21 @@ def nextWord(request):
 #        if checkExistance(curWord, session_num) == True:
 #            return JSONResponse({'word':"non", 'session':session_num})
 
-
-        # 웹페이지에서받은 단어 끝으로 시작하는 단어 10개를 가져옴
-        url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page=1"
-        url =  url[0:40] + urllib.quote(curWord[len(curWord)-2:len(curWord)-1].encode('utf-8')) + url[41:]
-        soup = BeautifulSoup(urllib2.urlopen(url).read())
-
-        whole_list = soup.findAll("ul", "lst3")
-        # 다음 단어를 말할게 없으면
-        if len(whole_list) == 0:
+        page = -1
+        for i in range(1,200):
+            if getNextTenWord(curWord, i) != 0:
+                page = i
+                break
+        if page == -1:
             return JSONResponse({'word':"end", 'session':session_num,
                                  'meaning':"end"})
+        else:
+            url="http://krdic.naver.com/search.nhn?query= %2A&kind=keyword&page= "
+            url =  url[0:40] +urllib.quote(curWord[len(curWord)-2:len(curWord)-1].encode('utf-8'))+ url[41:len(url)-1] + str(page)
+            soup = BeautifulSoup(urllib2.urlopen(url).read())
+
+            whole_list = soup.findAll("ul", "lst3")
+
         word_list = whole_list[0].findAll("a", "fnt15")
         l = []
         for i in word_list:
