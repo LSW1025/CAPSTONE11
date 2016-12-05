@@ -182,15 +182,14 @@ def nextWord(request):
     if request.method == 'GET':
         curWord = request.GET['word']
         session_num = request.GET['session']
+
+        if len(curWord) == 3: # if length of word == 1
+            return JSONResponse({'word':"no", 'session':session_num,
+                                 'meaning':"no"})
         if checkExistance(curWord, session_num) == False:
             return JSONResponse({'word':"no", 'session':session_num,
                                  'meaning':"no"})
-        # 유저가 말한 단어가 중복이면
-#        if checkDuplication(curWord, session_num) == True:
-#            return JSONResponse({'word':"dup", 'session':session_num})
-        # 유저가 말한 단어가 존재하지 않으면        
-#        if checkExistance(curWord, session_num) == True:
-#            return JSONResponse({'word':"non", 'session':session_num})
+
         page = -1
         for i in range(1,10):
             if getNextTenWord(curWord, i,session_num) != 0:
