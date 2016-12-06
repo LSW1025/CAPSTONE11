@@ -191,7 +191,7 @@ def nextWord(request):
                                  'meaning':"no"})
 
         page = -1
-        for i in range(1,10):
+        for i in range(1,3):
             if getNextTenWord(curWord, i,session_num) != 0:
                 page = i
                 break
